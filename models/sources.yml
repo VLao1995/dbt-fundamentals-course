@@ -1,0 +1,38 @@
+version: 2
+
+sources:
+  - name: jaffle_shop
+    description: A clone of a Public BigQuery database.
+    database: dbt-tutorial
+    tables:
+      - name: customers
+        description: Raw customers data.
+        columns:
+          - name: id
+            description: Primary key for customers
+            tests:
+              - unique
+              - not_null
+      - name: orders
+        description: Raw orders data.
+        columns:
+          - name: id
+            description: Primary key for orders.
+            tests:
+              - unique
+              - not_null
+
+  - name: stripe
+    database: dbt-tutorial
+    tables:
+      - name: payment        
+        loaded_at_field: _batched_at
+        freshness: 
+          warn_after: {count: 1, period: day} # Warn if a day without data
+          error_after: {count: 7 , period: day} # Error if a week without data
+        
+        # NOTE: SOURCE FRESHNESS DOESN'T SEEM TO WORK TOO WELL WITH BIGQUERY PUBLIC DATASET, SEE BELOW RECOMMENDED SOLUTION
+            # Here’s what I did to get the snapshot freshness exercise to work with the BQ public dataset
+            # replicated the public dataset into my own BQ project.  this persisted the _batched_at column
+            # Updated my source in the project to use this new replica and use the _batched_at column as my loaded_at_field
+            # Verified that warn/error worked as expected when using the dbt source snapshot-freshness command.
